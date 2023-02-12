@@ -25,9 +25,9 @@ For this we have designed a system that is easily configurable on the number and
 * Provide users with an interactive UI where they can see all the clusters getting formed in real-time.
 * Providing an option for the users to select and zoom into the interested clusters.
 
-## implementation screenshots
+## Implementation screenshots
 1. HOMEPAGE:   
-![alt text](https://github.com/divijakinger/TRINIT_594092-UF46RV01_DEV04/blob/main/IMAGES/points.jpg)
+![alt text](https://github.com/divijakinger/TRINIT_594092-UF46RV01_DEV04/blob/main/IMAGES/homepage.jpg)
 
 2. CLUSTERS:
 ![alt text](https://github.com/divijakinger/TRINIT_594092-UF46RV01_DEV04/blob/main/IMAGES/points.jpg)
