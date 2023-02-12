@@ -27,7 +27,7 @@ For this we have designed a system that is easily configurable on the number and
 
 ## Implementation screenshots
 1. HOMEPAGE:   
-![alt text](https://github.com/divijakinger/TRINIT_594092-UF46RV01_DEV04/blob/main/IMAGES/homepage.jpg)
+![alt text](https://github.com/divijakinger/TRINIT_594092-UF46RV01_DEV04/blob/main/IMAGES/home.png)
 
 2. CLUSTERS:
 ![alt text](https://github.com/divijakinger/TRINIT_594092-UF46RV01_DEV04/blob/main/IMAGES/points.jpg)
