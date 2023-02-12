@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DASHBOARD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+  </head>
+  <style>
+    body {
+        background-color: #062130;
+        color: white;
+    }
+
+
+  </style>
+  <body>
+    <div>
+        <div class="container mt-5">
+            <form id="myForm">
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Parameters</label>
+                    <input type="text" class="form-control" id="par_input" name="columns" placeholder="comma separated list of Parameters">
+                </div>
+                <div class="mb-1">
+                    <label for="exampleFormControlInput1" class="form-label">Rules</label>
+                    <input type="text" class="form-control" id="rules_input" name="rules" placeholder="Boolean Rules">
+                </div>
+            </form>
+            <div class="d-flex justify-content-end">
+                <button type="submit" onclick="submitForm()" class="btn btn-primary mt-lg-4">Generate</button>
+            </div>
+            
+            <div class="d-none" id="extra">
+                <div class="d-flex justify-content-end">
+                    <button type="button" id="refresh_btn" onclick="refreshGraph()" class="btn btn-primary mt-lg-4">Refresh</button>
+                </div>
+                <canvas id="myChart" class="p-5"></canvas>
+                <div class="col-12 mt-5">
+                    <h3>Data Analytics</h3>
+                        <div class="row">
+                            <div class="col-8">
+                                <h5>Cluster Centers</h5>
+                                <div id="cluster_centers" class="mt-3">
+                                    <canvas id="bubbleChart" class="p-5"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <h5>Cluster Analysis</h5>
+                                <div id="cluster_analysis" class="mt-3">
+                                    <canvas id="pieChart" class="p-5"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+                <div class="d-flex justify-content-start">
+                    <button type="button" class="btn btn-warning mt-lg-4"  data-bs-toggle="modal" data-bs-target="#exampleModal">Query Cluster</button>
+                    <!-- Modal -->
+                <div class="modal fade" style="color: black!important;" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Query Clusters</h1>
+    
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="exampleFormControlInput1" class="form-label">Cluster Name</label>
+                                <input type="text" class="form-control" id="cluster_input" name="cluster" placeholder="Cluster Name/Number">
+                            </div>
+                            <div class="mb-3">
+                                <label for="exampleFormControlInput1" class="form-label">SQL Query</label>
+                                <input type="text" class="form-control" id="sql_input" name="sql" placeholder="Please enter correct SQL Query">
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="query_cluster()">Save changes</button>
+                            </div>
+                        </div>
+                        </div>
+                </div>
+                </div>
+                <div id="query_result">
+                    <h1>Query Result</h1>
+                    <div id="table" style="color: white !important;"></div>
+                </div>
+
+            </div>
+
+            
+        </div>
+        
+      </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+    <script>
+        var trial = new Chart(myChart); 
+        var pie = new Chart(pieChart);
+        var bubble = new Chart(bubbleChart);
+
+        function submitForm() {
+            var par = document.getElementById("par_input").value;
+            var rules = document.getElementById("rules_input").value;
+            var data = {
+                "columns": par,
+                "rules": rules
+            }
+            let options = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+            }
+            const url = "https://2fbc-103-48-100-66.in.ngrok.io/send_constraints"
+            let fetchRes = fetch(
+                `https://2fbc-103-48-100-66.in.ngrok.io/send_constraints`,
+                options);
+            fetchRes.then(res =>
+                res.json()).then(d => {
+                    console.log(d);
+                    var label_data = d['labels']
+                    var pie_analytics = d['piechart']
+                    var cluster_centers = d['cluster_centers']
+                    generateChart(label_data,par);
+                    generateAnalysis(pie_analytics,cluster_centers);
+            })
+            
+        }
+
+        function generateAnalysis(pie_analytics,cluster_centers){
+            pie.destroy()
+            bubble.destroy()
+            labels = []
+            pie_data = []
+            bg = []
+            for (var i in pie_analytics){
+                var curr_data = pie_analytics[i]
+                var curr_col = "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0")
+                labels.push("Cluster " + i)
+                pie_data.push(curr_data)
+                bg.push(curr_col)
+            }
+
+            console.log(labels)
+            console.log(pie_data)
+            console.log(bg)
+            const data = {
+            labels: labels,
+            datasets: [{
+                label: 'Cluster Analysis',
+                data: pie_data,
+                backgroundColor: bg,
+                hoverOffset: 4
+            }]
+            };
+            const pie_config = {
+            type: 'doughnut',
+            data: data,
+            };
+            pie = new Chart("pieChart", pie_config);
+
+            cluster_data = []
+            for (var j in cluster_centers){
+                curr_data = cluster_centers[j]
+                curr = {
+                    x: curr_data[0],
+                    y: curr_data[1],
+                    r: 15
+                }
+                cluster_data.push(curr)
+            }
+
+            const bubble_data = {
+            datasets: [{
+                label: 'Cluster Centers',
+                data: cluster_data,
+                backgroundColor: 'rgb(255, 99, 132)'
+            }]
+            };
+            const config = {
+            type: 'bubble',
+            data: bubble_data,
+            options: {}
+            };
+
+            bubble = new Chart("bubbleChart", config);
+        }
+
+        function query_cluster(){
+            var sql = document.getElementById("sql_input").value;
+            var cluster = document.getElementById("cluster_input").value;
+            var data = {
+                "sql": sql,
+                "cluster": cluster
+            }
+
+            let options = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+            }
+            let fetchRes = fetch(
+                `https://2fbc-103-48-100-66.in.ngrok.io/cluster_queries`,
+                options);
+            fetchRes.then(res =>
+                res.json()).then(d => {
+                    console.log(d);
+                    // write a function to generate the table and display it in the modal itself
+                    generateTable(d);
+            })
+        }
+
+        function generateTable(data){
+            // iterate over the data and generate the table
+            var table = document.getElementById("table");
+            var inner = " <tbody>"
+            var header = `<table class="table table-dark"><thead><tr>`
+            for (var k in data["heading"]){
+                var curr_col = data["heading"][k]
+                header += `<th scope="col">${curr_col}</th>`
+            }
+            for (var i in data["data"]){
+                var curr_data = data["data"][i]
+                inner += `<tr class="table-dark">`
+                for (var j in curr_data){
+                    var curr = curr_data[j]
+                    inner += "<td>" + curr + "</td>"
+                }
+                inner += "</tr>"
+            }
+            inner += "</tbody>"
+            header += `${inner}</tr></thead> </table>`
+            
+            table.innerHTML = header
+            
+            table.style.color = "white !important"
+            
+        }
+
+        function generateChart(dataset,parameters){
+        // get data from backend
+        // get labels from backend
+        trial.destroy();
+        params_list = parameters.split(",")
+        datasets = []
+        for (var i in dataset){
+            var curr_data = dataset[i]
+            var curr_col = "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0")
+            var label = "Cluster " + i
+            var curr_dataset = {
+                label: label,
+                data: curr_data,
+                backgroundColor: curr_col,
+                pointRadius: 7,
+                pointHoverRadius: 10,
+
+            }
+            datasets.push(curr_dataset)
+        }
+
+         const data = {
+            datasets: datasets
+        };
+        const config = {
+        type: 'scatter',
+        data: data,
+        options: {
+            responsive: true,
+            plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    color: 'white'
+                    }
+            },
+            title: {
+                display: true,
+                text: 'Current Clusters',
+                color:'#FFFFFF'
+            }
+            },
+            scales: {
+            x: {
+                ticks: {
+                color: "white"
+                },
+                grid: {
+                    color: "white"
+                },
+                title: {
+                    display: true,
+                    text: params_list[0],
+                    color: 'white'
+                }
+            },
+            y: {
+                ticks: {
+                    color: "white"
+                },
+                grid: {
+                    color: "white"
+                },
+                title: {
+                    display: true,
+                    text: params_list[1],
+                    color: 'white'
+                }
+            }, 
+
+            }
+        },
+
+        };
+        trial = new Chart("myChart", config);
+        if (localStorage.getItem('api_end') !== null){
+            console.log("here")
+            localStorage['params'] = document.getElementById("par_input").value;
+            localStorage['rules'] = document.getElementById("rules_input").value;
+            document.getElementById("extra").classList.remove("d-none");
+        } else {
+            console.log("here2")
+        }
+        }
+
+        function refreshGraph(){
+            var par = localStorage['params'];
+            var rules = localStorage['rules'];
+            var data = {
+                "columns": localStorage['params'],
+                "rules": localStorage['rules'],
+                "api_end": localStorage['api_end']
+            }
+            let options = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+            }
+            let fetchRes = fetch(
+                `https://2fbc-103-48-100-66.in.ngrok.io/refresh`,
+                options);
+            fetchRes.then(res =>
+                res.json()).then(d => {
+                    console.log(d);
+                    var label_data = d['labels']
+                    var pie_analytics = d['piechart']
+                    var cluster_centers = d['cluster_centers']
+                    generateChart(label_data,par);
+                    generateAnalysis(pie_analytics,cluster_centers);
+            })
+        }
+    </script>
+</body>
+</html>
